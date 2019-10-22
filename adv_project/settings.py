@@ -29,7 +29,9 @@ SECRET_KEY = config('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', cast=bool)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = config('ALLOWED_HOSTS')
+
+DATABASE_URL = config('DATABASE_URL')
 
 
 # Application definition
@@ -94,7 +96,7 @@ WSGI_APPLICATION = 'adv_project.wsgi.application'
 # https://docs.djangoproject.com/en/2.1/ref/settings/#databases
 
 DATABASES = {
-    'default': dj_database_url.config()
+    'default': dj_database_url.config(default=DATABASE_URL, conn_max_age=600)
 }
 
 
