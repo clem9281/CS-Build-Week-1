@@ -46,7 +46,7 @@ def rooms(request):
     return JsonResponse(serializers.serialize('json', Room.objects.all()), safe=False)
 
 
-# @csrf_exempt
+@csrf_exempt
 @api_view(["POST"])
 def move(request):
     dirs={"n": "north", "s": "south", "e": "east", "w": "west"}
