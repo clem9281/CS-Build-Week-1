@@ -30,9 +30,13 @@ SECRET_KEY = config('SECRET_KEY')
 DEBUG = config('DEBUG', cast=bool)
 
 ALLOWED_HOSTS = config('ALLOWED_HOSTS')
+<<<<<<< Updated upstream
 
 DATABASE_URL = config('DATABASE_URL')
 
+=======
+DATABASE_URL = config('DATABASE_URL')
+>>>>>>> Stashed changes
 
 # Application definition
 
