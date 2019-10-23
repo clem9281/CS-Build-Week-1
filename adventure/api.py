@@ -17,6 +17,18 @@ PUSHER_CLUSTER = config('PUSHER_CLUSTER')
 
 pusher = Pusher(app_id=PUSHER_APP_ID, key=PUSHER_KEY, secret=PUSHER_SECRET, cluster=PUSHER_CLUSTER)
 
+
+"""
+What is @csrf_exempt?
+
+Csrf exempt is a feature of django which allows bypassing of csrf verification by django.
+By default, django check for csrf token with each POST request, it verifies csrf token before rendering the view. 
+Its a very good security practice to verify csrf of post requests as we know django can’t be compromised in case of security.
+
+Source: https://khalsalabs.com/csrf-exempt-in-django/
+"""
+
+
 @csrf_exempt
 @api_view(["GET"])
 def initialize(request):
