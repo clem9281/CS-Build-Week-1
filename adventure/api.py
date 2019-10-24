@@ -91,12 +91,14 @@ def take_item(request):
     uuid = player.uuid
     room = player.room()
     item = request.data['item']
+    if item in player.inventory:
+       return JsonResponse({'uuid': uuid, 'name':player.user.username, 'title':room.title, 'description':room.description, 'inventory':player.inventory, 'room_items': room.items, 'message': "You've already got one of those!"}, safe=True)
     if item in room.items:
         room.items.remove(item)
         room.save()
         player.inventory.append(item)
         player.save()
-    return JsonResponse({'uuid': uuid, 'name':player.user.username, 'title':room.title, 'description':room.description, 'inventory':player.inventory, 'room_items': room.items}, safe=True)
+        return JsonResponse({'uuid': uuid, 'name':player.user.username, 'title':room.title, 'description':room.description, 'inventory':player.inventory, 'room_items': room.items, 'message': ""}, safe=True)
 
 @csrf_exempt
 @api_view(["POST"])
