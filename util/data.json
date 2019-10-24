@@ -1320,6 +1320,16 @@
             "manacles"
         ]
     },
+    "Party Room": {
+        "description": "All your friends are here! It's a party!",
+        "items": [
+            "baloons",
+            "party favors",
+            "cake",
+            "presents",
+            "pets"
+        ]
+    },
     "Pen": {
         "description": "This room is often a small enclosure for animals, or occasionally an enclosure created for the purpose of confinement or safekeeping.",
         "items": [
