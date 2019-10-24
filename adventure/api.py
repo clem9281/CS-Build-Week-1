@@ -99,6 +99,22 @@ def take_item(request):
         player.inventory.append(item)
         player.save()
         return JsonResponse({'uuid': uuid, 'name':player.user.username, 'title':room.title, 'description':room.description, 'inventory':player.inventory, 'room_items': room.items, 'message': ""}, safe=True)
+    
+@csrf_exempt
+@api_view(["POST"])
+def drop_item(request):
+    user = request.user
+    player = user.player
+    player_id = player.id
+    uuid = player.uuid
+    room = player.room()
+    item = request.data['item']
+    if item in player.inventory:
+        player.inventory.remove(item)
+        player.save()
+        room.items.append(item)
+        room.save()
+        return JsonResponse({'uuid': uuid, 'name':player.user.username, 'title':room.title, 'description':room.description, 'inventory':player.inventory, 'room_items': room.items, 'message': ""}, safe=True)
 
 @csrf_exempt
 @api_view(["POST"])
