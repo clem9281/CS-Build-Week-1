@@ -99,6 +99,7 @@ def take_item(request):
         player.inventory.append(item)
         player.save()
         return JsonResponse({'uuid': uuid, 'name':player.user.username, 'title':room.title, 'description':room.description, 'inventory':player.inventory, 'room_items': room.items, 'message': ""}, safe=True)
+    return JsonResponse({'uuid': uuid, 'name':player.user.username, 'title':room.title, 'description':room.description, 'inventory':player.inventory, 'room_items': room.items, 'message': "Something went wrong picking up that item"}, safe=True)
     
 @csrf_exempt
 @api_view(["POST"])
@@ -115,6 +116,8 @@ def drop_item(request):
         room.items.append(item)
         room.save()
         return JsonResponse({'uuid': uuid, 'name':player.user.username, 'title':room.title, 'description':room.description, 'inventory':player.inventory, 'room_items': room.items, 'message': ""}, safe=True)
+    else:
+        return JsonResponse({'uuid': uuid, 'name':player.user.username, 'title':room.title, 'description':room.description, 'inventory':player.inventory, 'room_items': room.items, 'message': "Something went wrong dropping that item"}, safe=True)
 
 @csrf_exempt
 @api_view(["POST"])
