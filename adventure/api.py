@@ -38,7 +38,7 @@ def initialize(request):
     uuid = player.uuid
     room = player.room()
     players = room.playerNames(player_id)
-    return JsonResponse({'uuid': uuid, 'name':player.user.username, 'title':room.title, 'description':room.description, 'players':players}, safe=True)
+    return JsonResponse({'uuid': uuid, 'name':player.user.username, 'title':room.title, 'description':room.description, 'players':players, 'inventory':player.inventory, 'room_items': room.items}, safe=True)
 
 @csrf_exempt
 @api_view(["GET"])
@@ -82,6 +82,21 @@ def move(request):
         players = room.playerNames(player_id)
         return JsonResponse({'name':player.user.username, 'title':room.title, 'description':room.description, 'players':players, 'error_msg':"You cannot move that way."}, safe=True)
 
+@csrf_exempt
+@api_view(["POST"])
+def take_item(request):
+    user = request.user
+    player = user.player
+    player_id = player.id
+    uuid = player.uuid
+    room = player.room()
+    item = request.data['item']
+    if item in room.items:
+        room.items.remove(item)
+        room.save()
+        player.inventory.append(item)
+        player.save()
+    return JsonResponse({'uuid': uuid, 'name':player.user.username, 'title':room.title, 'description':room.description, 'inventory':player.inventory, 'room_items': room.items}, safe=True)
 
 @csrf_exempt
 @api_view(["POST"])
