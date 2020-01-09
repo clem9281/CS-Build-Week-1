@@ -8,6 +8,7 @@ from .models import *
 from rest_framework.decorators import api_view
 import json
 from django.core import serializers
+from django.forms.models import model_to_dict
 
 # instantiate pusher
 # PUSHER_APP_ID = config('PUSHER_APP_ID')
@@ -38,24 +39,42 @@ def initialize(request):
     uuid = player.uuid
     room = player.room()
     players = room.playerNames(player_id)
-    return JsonResponse({'uuid': uuid, 'name':player.user.username, 'title':room.title, 'description':room.description, 'players':players, 'inventory':player.inventory, 'room_items': room.items}, safe=True)
+    player_obj = model_to_dict(player)
+    player_obj['room'] = model_to_dict(Room.objects.get(id=player.currentRoom))
+    player_obj['username'] = user.username
+    return JsonResponse(
+        {
+            "player": player_obj,
+            # "uuid": uuid,
+            # "name": player.user.username,
+            # "title": room.title,
+            # "description": room.description,
+            "players": players,
+            # "inventory": player.inventory,
+            # "room_items": room.items,
+            "rooms": serializers.serialize("json", Room.objects.all()),
+        },
+        safe=True,
+    )
+
 
 @csrf_exempt
 @api_view(["GET"])
 def rooms(request):
-    return JsonResponse(serializers.serialize('json', Room.objects.all()), safe=False)
+    return JsonResponse(serializers.serialize("json", Room.objects.all()), safe=False)
 
 
 @csrf_exempt
 @api_view(["POST"])
 def move(request):
-    dirs={"n": "north", "s": "south", "e": "east", "w": "west"}
+    user = request.user
+    dirs = {"n": "north", "s": "south", "e": "east", "w": "west"}
     reverse_dirs = {"n": "south", "s": "north", "e": "west", "w": "east"}
     player = request.user.player
     player_id = player.id
     player_uuid = player.uuid
     data = json.loads(request.body)
-    direction = data['direction']
+    direction = data["direction"]
     room = player.room()
     nextRoomID = None
     if direction == "n":
@@ -68,19 +87,50 @@ def move(request):
         nextRoomID = room.w_to
     if nextRoomID is not None and nextRoomID > 0:
         nextRoom = Room.objects.get(id=nextRoomID)
-        player.currentRoom=nextRoomID
+        player.currentRoom = nextRoomID
         player.save()
         players = nextRoom.playerNames(player_id)
         currentPlayerUUIDs = room.playerUUIDs(player_id)
         nextPlayerUUIDs = nextRoom.playerUUIDs(player_id)
+        player_obj = model_to_dict(player)
+        player_obj['room'] = model_to_dict(Room.objects.get(id=player.currentRoom))
+        player_obj['username'] = user.username
         # for p_uuid in currentPlayerUUIDs:
         #     pusher.trigger(f'p-channel-{p_uuid}', u'broadcast', {'message':f'{player.user.username} has walked {dirs[direction]}.'})
         # for p_uuid in nextPlayerUUIDs:
         #     pusher.trigger(f'p-channel-{p_uuid}', u'broadcast', {'message':f'{player.user.username} has entered from the {reverse_dirs[direction]}.'})
-        return JsonResponse({'name':player.user.username, 'title':nextRoom.title, 'description':nextRoom.description, 'players':players, 'error_msg':"", 'inventory':player.inventory,'room_items': nextRoom.items}, safe=True )
+        return JsonResponse(
+            {
+                # "name": player.user.username,
+                # "title": nextRoom.title,
+                # "description": nextRoom.description,
+                "players": players,
+                "error_msg": "",
+                # "inventory": player.inventory,
+                # "room_items": nextRoom.items,
+                "player": player_obj
+            },
+            safe=True,
+        )
     else:
         players = room.playerNames(player_id)
-        return JsonResponse({'name':player.user.username, 'title':room.title, 'description':room.description, 'players':players, 'inventory':player.inventory,'room_items': room.items, 'error_msg':"You cannot move that way."}, safe=True)
+        player_obj = model_to_dict(player)
+        player_obj['room'] = model_to_dict(Room.objects.get(id=player.currentRoom))
+        player_obj['username'] = user.username
+        return JsonResponse(
+            {
+                # "name": player.user.username,
+                # "title": room.title,
+                # "description": room.description,
+                "players": players,
+                "player": player_obj,
+                # "inventory": player.inventory,
+                # "room_items": room.items,
+                "error_msg": "You cannot move that way.",
+            },
+            safe=True,
+        )
+
 
 @csrf_exempt
 @api_view(["POST"])
@@ -90,17 +140,60 @@ def take_item(request):
     player_id = player.id
     uuid = player.uuid
     room = player.room()
-    item = request.data['item']
+    item = request.data["item"]
+    player_obj = model_to_dict(player)
+    player_obj['room'] = model_to_dict(Room.objects.get(id=player.currentRoom))
+    player_obj['username'] = user.username
     if item in player.inventory:
-       return JsonResponse({'uuid': uuid, 'name':player.user.username, 'title':room.title, 'description':room.description, 'inventory':player.inventory, 'room_items': room.items, 'message': "You've already got one of those!"}, safe=True)
+        return JsonResponse(
+            {
+                "uuid": uuid,
+                "name": player.user.username,
+                "title": room.title,
+                "description": room.description,
+                "inventory": player.inventory,
+                "room_items": room.items,
+                "message": "You've already got one of those!",
+                "player": player_obj
+            },
+            safe=True,
+        )
     if item in room.items:
         room.items.remove(item)
         room.save()
         player.inventory.append(item)
         player.save()
-        return JsonResponse({'uuid': uuid, 'name':player.user.username, 'title':room.title, 'description':room.description, 'inventory':player.inventory, 'room_items': room.items, 'message': ""}, safe=True)
-    return JsonResponse({'uuid': uuid, 'name':player.user.username, 'title':room.title, 'description':room.description, 'inventory':player.inventory, 'room_items': room.items, 'message': "Something went wrong picking up that item"}, safe=True)
-    
+        player_obj = model_to_dict(player)
+        player_obj['room'] = model_to_dict(Room.objects.get(id=player.currentRoom))
+        player_obj['username'] = user.username
+        return JsonResponse(
+            {
+                "uuid": uuid,
+                "name": player.user.username,
+                "title": room.title,
+                "description": room.description,
+                "inventory": player.inventory,
+                "room_items": room.items,
+                "message": "",
+                "player": player_obj
+            },
+            safe=True,
+        )
+    return JsonResponse(
+        {
+            "uuid": uuid,
+            "name": player.user.username,
+            "title": room.title,
+            "description": room.description,
+            "inventory": player.inventory,
+            "room_items": room.items,
+            "message": "Something went wrong picking up that item",
+            "player": player_obj
+        },
+        safe=True,
+    )
+
+
 @csrf_exempt
 @api_view(["POST"])
 def drop_item(request):
@@ -109,18 +202,50 @@ def drop_item(request):
     player_id = player.id
     uuid = player.uuid
     room = player.room()
-    item = request.data['item']
+    item = request.data["item"]
+    player_obj = model_to_dict(player)
+    player_obj['room'] = model_to_dict(Room.objects.get(id=player.currentRoom))
+    player_obj['username'] = user.username
     if item in player.inventory:
         player.inventory.remove(item)
         player.save()
         room.items.append(item)
         room.save()
-        return JsonResponse({'uuid': uuid, 'name':player.user.username, 'title':room.title, 'description':room.description, 'inventory':player.inventory, 'room_items': room.items, 'message': ""}, safe=True)
+        player_obj = model_to_dict(player)
+        player_obj['room'] = model_to_dict(Room.objects.get(id=player.currentRoom))
+        player_obj['username'] = user.username
+        return JsonResponse(
+            {
+                "uuid": uuid,
+                "name": player.user.username,
+                "title": room.title,
+                "description": room.description,
+                "inventory": player.inventory,
+                "room_items": room.items,
+                "message": "",
+                "player": player_obj
+            },
+            safe=True,
+        )
     else:
-        return JsonResponse({'uuid': uuid, 'name':player.user.username, 'title':room.title, 'description':room.description, 'inventory':player.inventory, 'room_items': room.items, 'message': "Something went wrong dropping that item"}, safe=True)
+        return JsonResponse(
+            {
+                "uuid": uuid,
+                "name": player.user.username,
+                "title": room.title,
+                "description": room.description,
+                "inventory": player.inventory,
+                "room_items": room.items,
+                "message": "Something went wrong dropping that item",
+                "player": player_obj
+            },
+            safe=True,
+        )
+
 
 @csrf_exempt
 @api_view(["POST"])
 def say(request):
     # IMPLEMENT
-    return JsonResponse({'error':"Not yet implemented"}, safe=True, status=500)
+    return JsonResponse({"error": "Not yet implemented"}, safe=True, status=500)
+
