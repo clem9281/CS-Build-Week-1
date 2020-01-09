@@ -141,6 +141,9 @@ def take_item(request):
     uuid = player.uuid
     room = player.room()
     item = request.data["item"]
+    player_obj = model_to_dict(player)
+    player_obj['room'] = model_to_dict(Room.objects.get(id=player.currentRoom))
+    player_obj['username'] = user.username
     if item in player.inventory:
         return JsonResponse(
             {
@@ -151,6 +154,7 @@ def take_item(request):
                 "inventory": player.inventory,
                 "room_items": room.items,
                 "message": "You've already got one of those!",
+                "player": player_obj
             },
             safe=True,
         )
@@ -159,6 +163,9 @@ def take_item(request):
         room.save()
         player.inventory.append(item)
         player.save()
+        player_obj = model_to_dict(player)
+        player_obj['room'] = model_to_dict(Room.objects.get(id=player.currentRoom))
+        player_obj['username'] = user.username
         return JsonResponse(
             {
                 "uuid": uuid,
@@ -168,6 +175,7 @@ def take_item(request):
                 "inventory": player.inventory,
                 "room_items": room.items,
                 "message": "",
+                "player": player_obj
             },
             safe=True,
         )
@@ -180,6 +188,7 @@ def take_item(request):
             "inventory": player.inventory,
             "room_items": room.items,
             "message": "Something went wrong picking up that item",
+            "player": player_obj
         },
         safe=True,
     )
@@ -194,11 +203,17 @@ def drop_item(request):
     uuid = player.uuid
     room = player.room()
     item = request.data["item"]
+    player_obj = model_to_dict(player)
+    player_obj['room'] = model_to_dict(Room.objects.get(id=player.currentRoom))
+    player_obj['username'] = user.username
     if item in player.inventory:
         player.inventory.remove(item)
         player.save()
         room.items.append(item)
         room.save()
+        player_obj = model_to_dict(player)
+        player_obj['room'] = model_to_dict(Room.objects.get(id=player.currentRoom))
+        player_obj['username'] = user.username
         return JsonResponse(
             {
                 "uuid": uuid,
@@ -208,6 +223,7 @@ def drop_item(request):
                 "inventory": player.inventory,
                 "room_items": room.items,
                 "message": "",
+                "player": player_obj
             },
             safe=True,
         )
@@ -221,6 +237,7 @@ def drop_item(request):
                 "inventory": player.inventory,
                 "room_items": room.items,
                 "message": "Something went wrong dropping that item",
+                "player": player_obj
             },
             safe=True,
         )
